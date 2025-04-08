@@ -10,10 +10,7 @@ import com.luv2code.project.uber.uberApp.exceptions.ResourceNotFoundException;
 import com.luv2code.project.uber.uberApp.exceptions.RuntimeConflictException;
 import com.luv2code.project.uber.uberApp.repositories.UserRepository;
 import com.luv2code.project.uber.uberApp.security.JwtService;
-import com.luv2code.project.uber.uberApp.services.AuthService;
-import com.luv2code.project.uber.uberApp.services.DriverService;
-import com.luv2code.project.uber.uberApp.services.RiderService;
-import com.luv2code.project.uber.uberApp.services.WalletService;
+import com.luv2code.project.uber.uberApp.services.*;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
 
+import static com.luv2code.project.uber.uberApp.enums.Role.ADMIN;
 import static com.luv2code.project.uber.uberApp.enums.Role.DRIVER;
 
 @Service
@@ -86,5 +84,13 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
         Driver savedDriver = driverService.createNewDriver(createDriver);
         return modelMapper.map(savedDriver, DriverDto.class);
+    }
+
+    @Override
+    public String refreshToken(String refreshToken) {
+        Long userId = jwtService.getUserIdFromToken(refreshToken);
+        User user = userRepository.findById(userId)
+                .orElseThrow(()-> new ResourceNotFoundException("User not found with id: "+userId));
+        return jwtService.generateAccessToken(user);
     }
 }
